@@ -66,7 +66,7 @@ def Q5(vdo_df):
             - To access 'GB_category_id.json', use the path '/data/GB_category_id.json'.
     '''
     # TODO:  Paste your code here
-    with open('/data/GB_category_id.json', 'r') as f:
+    with open('/data/GB_category_id.json', 'r') as f: #change address
         category_data = json.load(f)
     category_mapping = {int(item['id']): item['snippet']['title'] for item in category_data['items']}
     vdo_df['category_name'] = vdo_df['category_id'].map(category_mapping)
