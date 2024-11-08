@@ -1,0 +1,142 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
+import numpy as np
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
+# Suppress convergence warnings for LogisticRegression
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+
+class BankLogistic:
+    def __init__(self, data_path):  # DO NOT modify this line
+        """
+        Initialize the BankLogistic class by reading data from the specified path.
+        """
+        self.data_path = data_path
+        self.df = pd.read_csv(data_path, sep=',')
+
+    def Q1(self):  # DO NOT modify this line
+        """
+        Returns the number of rows in the dataset.
+        """
+        return len(self.df)
+
+    def Q2(self):  # DO NOT modify this line
+        """
+        Returns the number of numeric variables in the dataset.
+        """
+        return self.df.select_dtypes(include='number').shape[1]
+
+    def Q3(self):  # DO NOT modify this line
+        """
+        Returns the number of categorical variables in the dataset.
+        """
+        return self.df.select_dtypes(include='object').shape[1]
+
+    def Q4(self):  # DO NOT modify this line
+        """
+        Returns the proportion of 'no' in the target variable 'y'.
+        """
+        return self.df['y'].value_counts(normalize=True).get('no', 0)
+
+    def Q5(self):  # DO NOT modify this line
+        """
+        Drops duplicates in the dataset and returns its shape.
+        """
+        # Drop duplicate rows
+        self.df.drop_duplicates(inplace=True)
+        # Return the shape of the dataset after removing duplicates
+        return self.df.shape
+
+    def Q6(self):  # DO NOT modify this line
+        """
+        Counts null values in 'job' and 'education' columns and fills missing values.
+        Returns the counts of null values before filling them.
+        """
+        # Drop duplicate rows
+        self.df.drop_duplicates(inplace=True)
+        # Replace 'unknown' with NaN
+        self.df.replace('unknown', np.nan, inplace=True)
+        
+        # Count missing values in 'job' and 'education'
+        job_nulls = self.df['job'].isnull().sum()
+        education_nulls = self.df['education'].isnull().sum()
+        
+        # Fill missing values: numeric columns with mean, categorical with mode
+        self.df.fillna(self.df.mean(numeric_only=True), inplace=True)
+        self.df.fillna(self.df.mode().iloc[0], inplace=True)
+        
+        # Return the counts of nulls
+        return int(job_nulls), int(education_nulls)
+
+    def Q7(self):  # DO NOT modify this line
+        """
+        Encodes categorical variables, splits the data into train and test sets, 
+        and returns their shapes.
+        """
+        self.prepare_data()  # Prepare the data
+        # Convert categorical variables to dummy variables
+        X = pd.get_dummies(self.df.drop(columns='y'), drop_first=True)
+        y = self.df['y']
+        
+        # Split the dataset into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, stratify=y, test_size=0.3, random_state=0
+        )
+        # Return the shapes of training and testing sets
+        return X_train.shape, X_test.shape
+
+    def Q8(self):  # DO NOT modify this line
+        """
+        Returns the number of 'no' instances in the test set.
+        """
+        self.prepare_data()  # Prepare the data
+        # Convert categorical variables to dummy variables
+        X = pd.get_dummies(self.df.drop(columns='y'), drop_first=True)
+        y = self.df['y']
+        
+        # Split the dataset into training and testing sets
+        _, X_test, _, y_test = train_test_split(
+            X, y, stratify=y, test_size=0.3, random_state=0
+        )
+        # Return the count of 'no' in the test set
+        return (y_test == 'no').sum()
+
+    def Q9(self):  # DO NOT modify this line
+        """
+        Builds a logistic regression model, evaluates it, 
+        and returns the macro F1 score rounded to two decimal places.
+        """
+        self.prepare_data()  # Prepare the data
+        # Convert categorical variables to dummy variables
+        X = pd.get_dummies(self.df.drop(columns='y'), drop_first=True)
+        y = self.df['y']
+        
+        # Split the dataset into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, stratify=y, test_size=0.3, random_state=0
+        )
+        # Train a logistic regression model
+        model = LogisticRegression(random_state=0, max_iter=5000)
+        model.fit(X_train, y_train)
+        
+        # Predict on the test set
+        y_pred = model.predict(X_test)
+        # Calculate and return the macro F1 score
+        f1_macro = f1_score(y_test, y_pred, average='macro')
+        return round(f1_macro, 2)
+
+    def prepare_data(self):  # Helper function to preprocess data
+        """
+        Prepares the data by removing duplicates, replacing 'unknown' values with NaN,
+        and filling missing values.
+        """
+        # Drop duplicate rows
+        self.df.drop_duplicates(inplace=True)
+        # Replace 'unknown' with NaN
+        self.df.replace('unknown', np.nan, inplace=True)
+        # Fill missing values: numeric columns with mean, categorical with mode
+        self.df.fillna(self.df.mean(numeric_only=True), inplace=True)
+        self.df.fillna(self.df.mode().iloc[0], inplace=True)

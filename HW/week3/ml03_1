@@ -1,0 +1,153 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
+
+class MushroomClassifier:
+    def __init__(self, data_path):  # Constructor method
+        # Save the path to the dataset and load it into a DataFrame
+        self.data_path = data_path
+        self.df = pd.read_csv(data_path)
+
+    def Q1(self):  # Method to count missing values in 'gill-size'
+        # Count and return the number of missing values in 'gill-size' column
+        return self.df['gill-size'].isna().sum()
+
+    def data_prep(self):  # Data preparation method
+        """Prepare the data for modeling."""
+        # Drop rows where the target variable ('label') is missing
+        self.df.dropna(subset=['label'], inplace=True)
+        
+        # Specify columns to drop (unnecessary for modeling)
+        drop_columns = [
+            'id', 'gill-attachment', 'gill-spacing', 'gill-size', 
+            'gill-color-rate', 'stalk-root', 'stalk-surface-above-ring',
+            'stalk-surface-below-ring', 'stalk-color-above-ring-rate', 
+            'stalk-color-below-ring-rate', 'veil-color-rate', 'veil-type'
+        ]
+        # Drop the specified columns
+        self.df.drop(columns=drop_columns, inplace=True)
+        
+        # Fill missing numeric values with column means
+        self.df.fillna(self.df.mean(numeric_only=True), inplace=True)
+        # Fill missing categorical values with column modes
+        self.df.fillna(self.df.mode().iloc[0], inplace=True)
+        
+        # Map the 'label' column to binary values: 'e' -> 1, 'p' -> 0
+        self.df['label'] = self.df['label'].map({'e': 1, 'p': 0})
+
+    def Q2(self):  # Method to get data shape after cleaning
+        """Get shape of data after cleaning."""
+        # Call data preparation method
+        self.data_prep()
+        # Return the shape of the DataFrame
+        return self.df.shape
+
+    def Q3(self):  # Method to count target values
+        """Count values of each class in the 'label' column."""
+        # Call data preparation method
+        self.data_prep()
+        # Return counts of each class in 'label' column
+        return self.df['label'].value_counts()
+
+    def Q4(self):  # Method to split data into training and testing sets
+        """Split the data into training and testing sets and return their shapes."""
+        # Prepare the data
+        self.data_prep()
+        
+        # Convert categorical columns to dummy variables (drop one category to avoid multicollinearity)
+        self.df = pd.get_dummies(self.df, drop_first=True)
+        
+        # Separate the target variable ('label') from features
+        y = self.df.pop('label')
+        X = self.df
+        
+        # Split the data into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, stratify=y, random_state=2020
+        )
+        # Return the shapes of training and testing sets
+        return X_train.shape, X_test.shape
+
+    def Q5(self):  # Method to perform grid search for optimal parameters
+        """Perform a grid search to find the best RandomForest parameters."""
+        # Prepare the data
+        self.data_prep()
+        
+        # Convert categorical columns to dummy variables
+        self.df = pd.get_dummies(self.df, drop_first=True)
+        
+        # Separate the target variable ('label') from features
+        y = self.df.pop('label')
+        X = self.df
+        
+        # Split the data into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, stratify=y, random_state=2020
+        )
+        
+        # Define the grid of parameters to search over
+        param_grid = {
+            'criterion': ['gini', 'entropy'],          # Splitting criteria
+            'max_depth': [2, 3],                      # Maximum tree depth
+            'min_samples_leaf': [2, 5],               # Minimum samples per leaf node
+            'n_estimators': [100],                    # Number of trees
+            'random_state': [2020]                    # Random seed
+        }
+        
+        # Set up GridSearchCV for Random Forest
+        grid_search = GridSearchCV(
+            estimator=RandomForestClassifier(),      # Base model
+            param_grid=param_grid,                   # Parameter grid
+            cv=5,                                    # 5-fold cross-validation
+            n_jobs=-1,                               # Use all available cores
+            scoring='f1_weighted'                    # Weighted F1 score
+        )
+        # Fit the model on the training data
+        grid_search.fit(X_train, y_train)
+        
+        # Return the best parameters found by grid search
+        return grid_search.best_params_
+
+    def Q6(self):  # Method to evaluate the model
+        """Evaluate the model on the test set and return the classification report."""
+        # Prepare the data
+        self.data_prep()
+        
+        # Convert categorical columns to dummy variables
+        self.df = pd.get_dummies(self.df, drop_first=True)
+        
+        # Separate the target variable ('label') from features
+        y = self.df.pop('label')
+        X = self.df
+        
+        # Split the data into training and testing sets
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, stratify=y, random_state=2020
+        )
+        
+        # Define the grid of parameters to search over
+        param_grid = {
+            'criterion': ['gini', 'entropy'],          # Splitting criteria
+            'max_depth': [2, 3],                      # Maximum tree depth
+            'min_samples_leaf': [2, 5],               # Minimum samples per leaf node
+            'n_estimators': [100],                    # Number of trees
+            'random_state': [2020]                    # Random seed
+        }
+        
+        # Set up GridSearchCV for Random Forest
+        grid_search = GridSearchCV(
+            estimator=RandomForestClassifier(),      # Base model
+            param_grid=param_grid,                   # Parameter grid
+            cv=5,                                    # 5-fold cross-validation
+            n_jobs=-1,                               # Use all available cores
+            scoring='f1_weighted'                    # Weighted F1 score
+        )
+        # Fit the model on the training data
+        grid_search.fit(X_train, y_train)
+        
+        # Make predictions on the test data
+        y_pred = grid_search.predict(X_test)
+        
+        # Return the classification report
+        return classification_report(y_test, y_pred)
