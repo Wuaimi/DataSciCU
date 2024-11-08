@@ -1,10 +1,15 @@
 import pandas as pd
+import os
 
 def main():
-    file = input()
+    # หา path ของไฟล์ scores_student.csv โดยอัตโนมัติ
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, 'scores_student.csv')
+    print(file_path)
+    df = pd.read_csv(file_path)
+    
     func = input("Enter function (Q1, Q2, Q3): ")
-    df = pd.read_csv(file)
-
+    
     if func == 'Q1':
         # Return the shape of the dataframe
         return df.shape
