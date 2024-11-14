@@ -127,7 +127,7 @@ class BankLogistic:
         # Calculate and return the macro F1 score
         f1_macro = f1_score(y_test, y_pred, average='macro')
         return round(f1_macro, 2)
-
+  
     def prepare_data(self):  # Helper function to preprocess data
         """
         Prepares the data by removing duplicates, replacing 'unknown' values with NaN,
